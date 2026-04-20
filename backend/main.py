@@ -359,6 +359,7 @@ class UpdateSettingsRequest(BaseModel):
     stage1_prompt: Optional[str] = None
     stage2_prompt: Optional[str] = None
     stage3_prompt: Optional[str] = None
+    council_member_stage1_prompts: Optional[Dict[str, str]] = None
 
 
 
@@ -417,6 +418,7 @@ async def get_app_settings():
         "stage1_prompt": settings.stage1_prompt,
         "stage2_prompt": settings.stage2_prompt,
         "stage3_prompt": settings.stage3_prompt,
+        "council_member_stage1_prompts": settings.council_member_stage1_prompts,
     }
 
 
@@ -492,6 +494,8 @@ async def update_app_settings(request: UpdateSettingsRequest):
         updates["stage2_prompt"] = request.stage2_prompt
     if request.stage3_prompt is not None:
         updates["stage3_prompt"] = request.stage3_prompt
+    if request.council_member_stage1_prompts is not None:
+        updates["council_member_stage1_prompts"] = request.council_member_stage1_prompts
 
     if request.serper_api_key is not None:
         updates["serper_api_key"] = request.serper_api_key
@@ -623,6 +627,7 @@ async def update_app_settings(request: UpdateSettingsRequest):
         "stage1_prompt": settings.stage1_prompt,
         "stage2_prompt": settings.stage2_prompt,
         "stage3_prompt": settings.stage3_prompt,
+        "council_member_stage1_prompts": settings.council_member_stage1_prompts,
     }
 
 

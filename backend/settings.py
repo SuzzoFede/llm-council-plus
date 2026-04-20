@@ -120,6 +120,7 @@ class Settings(BaseModel):
     stage1_prompt: str = STAGE1_PROMPT_DEFAULT
     stage2_prompt: str = STAGE2_PROMPT_DEFAULT
     stage3_prompt: str = STAGE3_PROMPT_DEFAULT
+    council_member_stage1_prompts: Optional[Dict[str, str]] = None
     
     # Execution Mode
     execution_mode: str = "full"  # Default execution mode: 'chat_only', 'chat_ranking', 'full'

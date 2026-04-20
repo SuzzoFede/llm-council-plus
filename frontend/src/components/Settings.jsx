@@ -105,6 +105,7 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
     title_prompt: '',
 
   });
+  const [councilMemberStage1Prompts, setCouncilMemberStage1Prompts] = useState({});
   const [activePromptTab, setActivePromptTab] = useState('stage1');
 
   const [isLoadingModels, setIsLoadingModels] = useState(false);
@@ -161,6 +162,7 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
       if (prompts.stage1_prompt !== settings.stage1_prompt) return true;
       if (prompts.stage2_prompt !== settings.stage2_prompt) return true;
       if (prompts.stage3_prompt !== settings.stage3_prompt) return true;
+      if (JSON.stringify(councilMemberStage1Prompts) !== JSON.stringify(settings.council_member_stage1_prompts || {})) return true;
 
       // Note: API keys are auto-saved on test, so we don't check them here
 
@@ -185,7 +187,8 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
     stage2Temperature,
     councilMemberFilters,
     chairmanFilter,
-    prompts
+    prompts,
+    councilMemberStage1Prompts
   ]);
 
   // Helper to determine if filters need to switch based on availability
@@ -399,6 +402,7 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
         stage3_prompt: data.stage3_prompt || '',
 
       });
+      setCouncilMemberStage1Prompts(data.council_member_stage1_prompts || {});
 
       // Clear Direct Keys (for security)
       setDirectKeys({
@@ -912,6 +916,33 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
     }));
   };
 
+  const handleMemberStage1PromptChange = (modelId, value) => {
+    if (!modelId) return;
+
+    setCouncilMemberStage1Prompts(prev => {
+      const next = { ...prev };
+      const trimmed = value.trim();
+
+      if (trimmed) {
+        next[modelId] = value;
+      } else {
+        delete next[modelId];
+      }
+
+      return next;
+    });
+  };
+
+  const handleClearMemberStage1Prompt = (modelId) => {
+    if (!modelId) return;
+
+    setCouncilMemberStage1Prompts(prev => {
+      const next = { ...prev };
+      delete next[modelId];
+      return next;
+    });
+  };
+
   const handleResetPrompt = async (key) => {
     try {
       const defaults = await api.getDefaultSettings();
@@ -981,6 +1012,7 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
         stage3_prompt: defaults.stage3_prompt,
 
       });
+      setCouncilMemberStage1Prompts({});
 
       // 5. Save the reset settings to backend
       const updates = {
@@ -1011,6 +1043,7 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
         stage1_prompt: defaults.stage1_prompt,
         stage2_prompt: defaults.stage2_prompt,
         stage3_prompt: defaults.stage3_prompt,
+        council_member_stage1_prompts: {},
       };
       await api.updateSettings(updates);
 
@@ -1100,7 +1133,8 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
       ollama_base_url: ollamaBaseUrl,
 
       // Prompts
-      prompts: prompts
+      prompts: prompts,
+      council_member_stage1_prompts: councilMemberStage1Prompts
     };
 
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config, null, 2));
@@ -1156,6 +1190,9 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
         // Apply Prompts
         if (config.prompts) {
           setPrompts(prev => ({ ...prev, ...config.prompts }));
+        }
+        if (config.council_member_stage1_prompts) {
+          setCouncilMemberStage1Prompts(config.council_member_stage1_prompts);
         }
 
         // Validate imported models against all available models
@@ -1243,6 +1280,7 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
         // Remote/Local filters for each selection
         council_member_filters: councilMemberFilters,
         chairman_filter: chairmanFilter,
+        council_member_stage1_prompts: councilMemberStage1Prompts,
         // Prompts
         ...prompts
       };
@@ -1531,6 +1569,9 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama, initi
                 handleCouncilModelChange={handleCouncilModelChange}
                 handleRemoveCouncilMember={handleRemoveCouncilMember}
                 handleAddCouncilMember={handleAddCouncilMember}
+                councilMemberStage1Prompts={councilMemberStage1Prompts}
+                handleMemberStage1PromptChange={handleMemberStage1PromptChange}
+                handleClearMemberStage1Prompt={handleClearMemberStage1Prompt}
                 setActiveSection={setActiveSection}
                 setActivePromptTab={setActivePromptTab}
                 // Validation

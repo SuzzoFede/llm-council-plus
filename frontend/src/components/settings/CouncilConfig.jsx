@@ -43,6 +43,9 @@ export default function CouncilConfig({
     handleCouncilModelChange,
     handleRemoveCouncilMember,
     handleAddCouncilMember,
+    councilMemberStage1Prompts,
+    handleMemberStage1PromptChange,
+    handleClearMemberStage1Prompt,
     setActiveSection,
     setActivePromptTab,
     // Validation
@@ -274,6 +277,9 @@ export default function CouncilConfig({
                         {councilModels.map((modelId, index) => {
                             const memberFilter = getMemberFilter(index);
                             const hasValidationError = validationErrors[`member_${index}`];
+                            const memberPrompt = modelId ? (councilMemberStage1Prompts?.[modelId] || '') : '';
+                            const hasUserQueryPlaceholder = memberPrompt.includes('{user_query}');
+                            const hasSearchPlaceholder = memberPrompt.includes('{search_context_block}');
                             return (
                                 <div key={index} className={`council-member-row ${hasValidationError ? 'validation-error' : ''}`}>
                                     <span className="member-label">Member {index + 1}</span>
@@ -312,6 +318,38 @@ export default function CouncilConfig({
                                                 ⚠️ Please select a model or remove this member
                                             </div>
                                         )}
+
+                                        <details style={{ marginTop: '10px' }}>
+                                            <summary style={{ cursor: modelId ? 'pointer' : 'not-allowed', opacity: modelId ? 1 : 0.6 }}>
+                                                Custom Stage 1 Prompt (optional)
+                                            </summary>
+                                            <div style={{ marginTop: '8px' }}>
+                                                <textarea
+                                                    value={memberPrompt}
+                                                    onChange={(e) => handleMemberStage1PromptChange(modelId, e.target.value)}
+                                                    placeholder="Leave empty to use the global Stage 1 prompt"
+                                                    rows={7}
+                                                    disabled={!modelId}
+                                                    style={{ width: '100%', resize: 'vertical' }}
+                                                />
+                                                <div className="section-description" style={{ marginTop: '6px', marginBottom: '8px' }}>
+                                                    Use placeholders: {'{user_query}'} and {'{search_context_block}'}. Empty means fallback to global Stage 1 prompt.
+                                                </div>
+                                                {memberPrompt && (!hasUserQueryPlaceholder || !hasSearchPlaceholder) && (
+                                                    <div className="heat-warning" style={{ marginBottom: '8px' }}>
+                                                        ⚠️ Recommended placeholders: {'{user_query}'} and {'{search_context_block}'}.
+                                                    </div>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    className="action-btn"
+                                                    disabled={!modelId || !memberPrompt}
+                                                    onClick={() => handleClearMemberStage1Prompt(modelId)}
+                                                >
+                                                    Clear Custom Prompt
+                                                </button>
+                                            </div>
+                                        </details>
                                     </div>
                                     {index >= 2 && (
                                         <button

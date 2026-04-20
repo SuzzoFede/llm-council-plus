@@ -103,23 +103,6 @@ async def stage1_collect_responses(user_query: str, search_context: str = "", re
         from .prompts import STAGE1_SEARCH_CONTEXT_TEMPLATE
         search_context_block = STAGE1_SEARCH_CONTEXT_TEMPLATE.format(search_context=search_context)
 
-    # Use customizable Stage 1 prompt
-    try:
-        prompt_template = settings.stage1_prompt
-        if not prompt_template:
-            from .prompts import STAGE1_PROMPT_DEFAULT
-            prompt_template = STAGE1_PROMPT_DEFAULT
-
-        prompt = prompt_template.format(
-            user_query=user_query,
-            search_context_block=search_context_block
-        )
-    except (KeyError, AttributeError, TypeError) as e:
-        logger.warning(f"Error formatting Stage 1 prompt: {e}. Using fallback.")
-        prompt = f"{search_context_block}Question: {user_query}" if search_context_block else user_query
-
-    messages = [{"role": "user", "content": prompt}]
-
     # Prepare tasks for all models
     models = get_council_models()
     
@@ -127,9 +110,25 @@ async def stage1_collect_responses(user_query: str, search_context: str = "", re
     yield len(models)
 
     council_temp = settings.council_temperature
+    member_stage1_prompts = settings.council_member_stage1_prompts or {}
 
     async def _query_safe(m: str):
         try:
+            try:
+                prompt_template = member_stage1_prompts.get(m) or settings.stage1_prompt
+                if not prompt_template:
+                    from .prompts import STAGE1_PROMPT_DEFAULT
+                    prompt_template = STAGE1_PROMPT_DEFAULT
+
+                prompt = prompt_template.format(
+                    user_query=user_query,
+                    search_context_block=search_context_block
+                )
+            except (KeyError, AttributeError, TypeError) as e:
+                logger.warning(f"Error formatting Stage 1 prompt for {m}: {e}. Using fallback.")
+                prompt = f"{search_context_block}Question: {user_query}" if search_context_block else user_query
+
+            messages = [{"role": "user", "content": prompt}]
             return m, await query_model(m, messages, temperature=council_temp)
         except Exception as e:
             return m, {"error": True, "error_message": str(e)}
